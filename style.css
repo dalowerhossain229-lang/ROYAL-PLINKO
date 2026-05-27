@@ -187,11 +187,12 @@ canvas {
     box-sizing: border-box; 
 }
 
+/* 🚀 বাজি ধরার প্লাস-মাইনাস ডিসপ্লে বক্স ১০০% এক লাইনে ফিট ভাই ভাই */
 .bet-selector { 
     display: flex; 
     align-items: center; 
     background: #060913; 
-    padding: 4px 8px; 
+    padding: 4px 12px; 
     border-radius: 20px; 
     border: 2px solid #1a233d; 
     flex: 1; 
