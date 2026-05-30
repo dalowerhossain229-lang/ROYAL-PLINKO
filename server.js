@@ -165,7 +165,7 @@ app.post('/api/plinko-drop', async (req, res) => {
         phpPayload.win_status = (winMultiplier >= 1.0) ? "win" : "lose";
         phpPayload.log_status = (winMultiplier >= 1.0) ? "win" : "lose";
 
-        }
+        
 
         const response = await axios.post(MAIN_SITE_URL + '/api_callback.php', phpPayload, { timeout: 30000 });
 
