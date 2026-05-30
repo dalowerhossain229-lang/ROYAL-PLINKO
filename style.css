@@ -1,0 +1,297 @@
+/* 🎰 GLOBAL ROYAL PLINKO CASINO MASTER RESPONSIVE CSS */
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    user-select: none; 
+    -webkit-user-select: none; 
+}
+
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background: #060913; 
+    color: white; 
+    margin: 0; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 100vh; 
+    height: 100dvh; 
+    overflow: hidden; 
+    padding-bottom: env(safe-area-inset-bottom); 
+}
+
+/* ক্যাসিনো হেডার প্যানেল এরিয়া */
+.header { 
+    width: 100%; 
+    padding: 6px 16px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: #0e1322; 
+    border-bottom: 2px solid #f1c40f; 
+    box-sizing: border-box; 
+    z-index: 100; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+    flex-shrink: 0; 
+}
+
+.brand .name { 
+    color: #f1c40f; 
+    font-weight: 900; 
+    font-size: 17px; 
+    letter-spacing: 1px; 
+}
+
+.brand .game { 
+    color: #00ffcc; 
+    font-weight: bold; 
+    font-size: 10px; 
+}
+
+.header-right { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+
+/* 🔈 সাউন্ড বোতাম স্টাইল ভাই ভাই */
+.sound-btn { 
+    background: #1a2238; 
+    border: 1px solid #1a233d; 
+    color: #fff; 
+    font-size: 14px; 
+    width: 32px; 
+    height: 34px; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: 0.2s; 
+}
+
+.sound-btn.muted-active { 
+    background: #7f1d1d; 
+    border-color: #ea2027; 
+}
+
+.balance-box { 
+    background: linear-gradient(145deg, #10ac84, #1dd1a1); 
+    padding: 4px 12px; 
+    border-radius: 30px; 
+    font-weight: bold; 
+    font-size: 14px; 
+    border: 1px solid #ffffff33; 
+}
+
+/* 🎯 ওরিজিনাল প্লিংকো ফিজিক্স পেগ বোর্ড উইন্ডো জোন ভাই ভাই */
+.plinko-board-zone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 94%;
+    max-width: 380px;
+    height: 52%; 
+    margin: auto 0;
+    flex-shrink: 1;
+}
+
+.board-window-frame {
+    width: 100%;
+    height: 100%;
+    background: #090d1a;
+    border-radius: 16px;
+    border: 2px solid #1e293b;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 25px #000;
+    display: flex;
+    flex-direction: column;
+}
+
+canvas { 
+    display: block; 
+    width: 100%; 
+    flex: 1; 
+    background: transparent;
+}
+
+/* 🚀 [মেগা ৫০০ ওডস ডিসপ্লে রো গ্রিড]: ওরিজিনাল ৮টি কালার রিওয়ার্ড বক্স ডিজাইন ভাই ভাই */
+.multipliers-footer-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: 100%;
+    height: 36px;
+    background: #030712;
+    border-top: 1px solid #1e293b;
+}
+
+.mult-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    transition: all 0.1s ease;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+.mult-box:last-child { border-right: none; }
+
+/* 💎 কিংস কালার কোড সিঙ্ক: মেগা ৫০০ উইন ঘরের জন্য কড়া ডেঞ্জারাস রেড নিওন লাক্সারি থিম */
+.bg-red-jackpot { 
+    background: linear-gradient(180deg, #dc2626, #7f1d1d); 
+    color: #fff !important; 
+    font-size: 9px !important;
+}
+.bg-orange-high { background: linear-gradient(180deg, #ea580c, #7c2d12); }
+.bg-yellow-low { background: linear-gradient(180deg, #ca8a04, #713f12); color: #fef08a; }
+.bg-green-safe { background: linear-gradient(180deg, #16a34a, #14532d); color: #bbf7d0; }
+
+/* 💥 [লাইভ বল হিট গ্লো বর্ম]: সোনার বল বক্সে আছড়ে পড়ার মেগা নিয়ন ফ্লেশ এনিমেশন ভাই ভাই */
+.slot-flash-active-glow {
+    transform: scaleY(1.15);
+    filter: brightness(1.6);
+    box-shadow: 0 -5px 15px currentColor, inset 0 0 8px #fff !important;
+    z-index: 5;
+}
+
+/* 🏆 ইন-লাইন লাইভ স্কোরিং মেসেজ বার भाई ভাই */
+.win-status-container { 
+    width: 92%; 
+    max-width: 360px; 
+    background: #0e1322; 
+    border: 1px solid #1a233d; 
+    padding: 8px; 
+    border-radius: 12px; 
+    text-align: center; 
+    font-weight: bold; 
+    font-size: 12px; 
+    color: #00e6ff; 
+    flex-shrink: 0; 
+    margin-bottom: 4px; 
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5); 
+}
+
+.win-glow-bar { 
+    background: #10ac84 !important; 
+    color: #fff !important; 
+    box-shadow: 0 0 15px #10ac84 !important; 
+    border-color: #fff; 
+}
+
+.lose-glow-bar { 
+    background: #962d2d !important; 
+    color: #fff !important; 
+    box-shadow: 0 0 15px #962d2d !important; 
+    border-color: #fff; 
+}
+
+/* 🎛️ কন্ট্রোল প্যানেল এরিয়া ভাই ভাই */
+.footer-controls { 
+    position: relative; 
+    bottom: 0; 
+    margin-bottom: 45px; 
+    width: 94%; 
+    max-width: 360px; 
+    background: #0e1322; 
+    padding: 8px 10px; 
+    border-radius: 25px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 6px; 
+    border: 1px solid #1a233d; 
+    box-shadow: 0 -5px 25px rgba(0,0,0,0.7); 
+    pointer-events: auto; 
+    flex-shrink: 0; 
+}
+
+.play-section { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    width: 100%; 
+    justify-content: space-between; 
+    padding: 0 4px; 
+    box-sizing: border-box; 
+}
+
+.bet-selector { 
+    display: flex; 
+    align-items: center; 
+    background: #060913; 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    border: 2px solid #1a233d; 
+    flex: 1; 
+    justify-content: space-between; 
+}
+
+.bet-btn-nav { 
+    color: #f1c40f; 
+    border: none; 
+    background: none; 
+    font-size: 18px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    width: 25px; 
+    height: 25px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.play-btn { 
+    background: linear-gradient(180deg, #f1c40f, #f39c12); 
+    color: #000; 
+    padding: 8px 22px; 
+    border-radius: 20px; 
+    font-weight: 900; 
+    font-size: 14px; 
+    cursor: pointer; 
+    border: none; 
+    box-shadow: 0 3px 10px rgba(241,196,15,0.3); 
+    transition: 0.1s; 
+    letter-spacing: 1px; 
+}
+
+.play-btn:active { 
+    transform: translateY(2px); 
+    box-shadow: none; 
+}
+
+.play-btn:disabled { 
+    background: #555 !important; 
+    color: #aaa !important; 
+    box-shadow: none !important; 
+    cursor: not-allowed; 
+}
+
+.icon-group { 
+    display: flex; 
+    gap: 8px; 
+}
+
+.icon-btn { 
+    background: #1a2238; 
+    border: none; 
+    color: #fff; 
+    width: 34px; 
+    height: 34px; 
+    border-radius: 50%; 
+    font-size: 13px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+}
+
+.icon-btn.active { 
+    background: #7f1d1d; 
+    color: #f1c40f; 
+    box-shadow: 0 0 8px #f1c40f; 
+}
