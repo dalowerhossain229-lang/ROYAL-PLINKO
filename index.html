@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ROYAL PLINKO - BALL DROPPING KING</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 🎰 ক্যাসিনো হেডার প্যানেল (ব্যালেন্স বক্স সহ ১ শতভাগ ডাইস-৩ডি স্ট্যান্ডার্ডে নিখুঁত লক ভাই ভাই) -->
+    <div class="header">
+        <div class="brand">
+            <div class="name">ROYAL PLINKO</div>
+            <div class="game">BALL DROPPING KING</div>
+        </div>
+        <div class="header-right">
+            <button class="sound-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
+            <div class="balance-box">৳ <span id="user-balance">0.00</span></div>
+        </div>
+    </div>
+
+    <!-- 🎯 ওরিজিনাল প্লিংকো ফিজিক্স পেগ বোর্ড উইন্ডো জোন ভাই ভাই -->
+    <div class="plinko-board-zone">
+        <div class="board-window-frame">
+            <canvas id="plinkoCanvas"></canvas>
+            
+            <!-- 🚀 [মেগা ৫০০ ওডস ডিসপ্লে ফিল্টার]: ওল্ড x10 কেটে কিংস কমান্ড অনুযায়ী দুপাশে মেগা ৫০০ নিয়ন ঘর লক ভাই ভাই -->
+            <div class="multipliers-footer-row">
+                <div class="mult-box bg-red-jackpot">x500</div>
+                <div class="mult-box bg-orange-high">x2</div>
+                <div class="mult-box bg-yellow-low">x0.5</div>
+                <div class="mult-box bg-green-safe">x0.2</div>
+                <div class="mult-box bg-green-safe">x0.2</div>
+                <div class="mult-box bg-yellow-low">x0.5</div>
+                <div class="mult-box bg-orange-high">x2</div>
+                <div class="mult-box bg-red-jackpot">x500</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🏆 ইন-লাইন লাইভ স্কোরিং ও উইন-লস মেসেজ বার -->
+    <div class="win-status-container" id="win-status-box">
+        <span id="win-text-msg">আপনার বাজি ধরুন এবং সোনার বল ড্রপ করুন ভাই!</span>
+    </div>
+
+    <!-- 🎛️ কন্ট্রোল প্যানেল এরিয়া (৳১-৳২০০০0 প্লাস-মাইনাস ও BET বোতাম পাশাপাশি লক ভাই) -->
+    <div class="footer-controls">
+        <div class="play-section">
+            <div class="bet-selector">
+                <button class="bet-btn-nav" onclick="adjustBet('minus')">−</button>
+                <div style="text-align: center; width: 60px;">
+                    <div style="font-size: 9px; color: #aaa; font-weight: bold;">BET</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #fff;" id="bet-display">৳fifty</div>
+                </div>
+                <button class="bet-btn-nav" onclick="adjustBet('plus')">+</button>
+            </div>
+
+            <button class="play-btn" id="spin-btn" onclick="handlePlinkoBallDropAction()">BET</button>
+
+            <div class="icon-group">
+                <button class="icon-btn" id="auto-btn" onclick="toggleAuto()">🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔌 [উইনগো কালার ট্রেড সিঙ্ক - ইউনিভার্সাল সকেট ইঞ্জিন লাইব্রেরি ভাই] -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('userId') || urlParams.get('id') || urlParams.get('username') || "guest_user";
+        const urlWallet = urlParams.get('wallet') || "main";
+        
+        const SERVER_URL = window.location.origin;
+
+        let balance = 0.00;
+        let currentBet = 50; 
+        let isSpinning = false; 
+        let isAuto = false;
+        let isMuted = false;
+        let autoInterval = null;
+
+        // 📊 প্লিংকো বোর্ড ট্রায়াঙ্গেল পেগ ম্যাট্রিক্স রেন্ডারার ভাই ভাই
+        const canvas = document.getElementById("plinkoCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let pegsArray = [];
+        const rowsCount = 8; // ৮টি পেগ সারি মেকানিজম
+
+        function resizePlinkoCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight - 36; // নিচের বক্সের জন্য বাফার সেফটি
+            buildPegsTriangleMatrix();
+        }
+
+        function buildPegsTriangleMatrix() {
+            pegsArray = [];
+            const startY = 40;
+            const spacingY = (canvas.height - startY) / (rowsCount + 1);
+
+            for (let r = 0; r < rowsCount; r++) {
+                const countInRow = r + 3; // প্রতি সারিতে পেগের সংখ্যা
+                const y = startY + r * spacingY;
+                const spacingX = canvas.width / (countInRow + 1);
+
+                for (let c = 0; c < countInRow; c++) {
+                    const x = (c + 1) * spacingX;
+                    pegsArray.push({ x, y });
+                }
+            }
+            drawPlinkoPegsBoard();
+        }
+
+        function drawPlinkoPegsBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // ১. বোর্ড ব্যাকগ্রাউন্ড ডট গ্রিড লাইন ভাই ভাই
+            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            pegsArray.forEach(peg => {
+                ctx.beginPath();
+                ctx.arc(peg.x, peg.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // ২. চূড়ায় জ্বলজ্বল করা মেগা রেড স্টার্টিং ড্রপ ট্রায়াঙ্গেল মার্কার ভাই ভাই
+            ctx.fillStyle = "#ff3333";
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 10);
+            ctx.lineTo(canvas.width / 2 - 8, 24);
+            ctx.lineTo(canvas.width / 2 + 8, 24);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // 🧠 [১ শতভাগ একুরেট মেগা ৫০০ ওডস ড্রপিং ফিজিক্স এনিমেশন ইঞ্জিন ভাই ভাই]
+        function runPlinkoBallDropAnimation(serverData) {
+            const pathInstructions = serverData.ballPath || [];
+            const finalSlotIdx = serverData.slotIndex || 0;
+            
+            let currentX = canvas.width / 2;
+            let currentY = 16;
+            
+            let currentPathStep = 0;
+            const startY = 40;
+            const spacingY = (canvas.height - startY) / (rowsCount + 1);
+
+            // বলের বাঁকানো কো-অর্ডিনেট ট্রাজেক্টরি জেনারেটর ম্যাথ চাবি
+            let animationNodesList = [{ x: currentX, y: currentY }];
+
+            for (let r = 0; r < rowsCount - 1; r++) {
+                const nextRowPegCount = r + 3;
+                const nextSpacingX = canvas.width / (nextRowPegCount + 1);
+                const nextY = startY + r * spacingY;
+
+                // সার্ভারের পাঠানো ডানে-বামে ড্রপ ইনস্ট্রাকশন সিঙ্ক
+                let choice = pathInstructions[r] !== undefined ? pathInstructions[r] : Math.floor(Math.random()*2);
+                
+                // ডাইনামিক পেগ বাউন্সিং পজিশন ক্যালকুলেটর ভাই ভাই
+                let targetPegIdx = Math.floor((currentX / canvas.width) * (nextRowPegCount + 1)) - 1;
+                if (choice === 1) targetPegIdx += 1;
+                
+                if (targetPegIdx < 0) targetPegIdx = 0;
+                if (targetPegIdx >= nextRowPegCount) targetPegIdx = nextRowPegCount - 1;
+
+                const targetX = (targetPegIdx + 1) * nextSpacingX;
+                
+                // ট্রাজেক্টরি স্মুথ করতে সাব-ফ্রেম নোড পুশ
+                animationNodesList.push({ x: (currentX + targetX)/2, y: nextY - spacingY/2 });
+                animationNodesList.push({ x: targetX, y: nextY });
+
+                currentX = targetX;
+                currentY = nextY;
+            }
+
+            // একদম নিচের ফাইনাল নিয়ন বক্সে ড্রপ করানোর শেষ বাউন্স সূত্র ভাই ভাই
+            const finalFooterSpacingX = canvas.width / 8;
+            const destinationX = (finalSlotIdx * finalFooterSpacingX) + (finalFooterSpacingX / 2);
+            animationNodesList.push({ x: destinationX, y: canvas.height });
+
+            let frameStepIdx = 0;
+
+            const ballPhysicsTimeline = setInterval(() => {
+                if (frameStepIdx >= animationNodesList.length) {
+                    clearInterval(ballPhysicsTimeline);
+                    
+                    // বল বক্সে আছড়ে পড়ার সাথে সাথে সেই নিয়ন বক্সটি কড়া ব্লিঙ্ক করবে ভাই ভাই!
+                    triggerFooterSlotFlashGlow(finalSlotIdx);
+                    showFinalGameReward(serverData.status, serverData.winAmount, serverData.multiplier);
+                    return;
+                }
+
+                drawPlinkoPegsBoard(); // বোর্ড ডট গ্রিড ড্র
+
+                // সোনার লাইভ ড্রপিং বল জেনারেটর নিওন বর্ম ভাই ভাই
+                ctx.fillStyle = "radial-gradient(circle at 30% 30%, #f1c40f, #f39c12)";
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = "#f1c40f";
+                
+                ctx.beginPath();
+                ctx.arc(animationNodesList[frameStepIdx].x, animationNodesList[frameStepIdx].y, 7, 0, Math.PI * 2);
+                ctx.fillStyle = "#f1c40f";
+                ctx.fill();
+                
+                // শ্যাডো রিসেট ভাই
+                ctx.shadowBlur = 0;
+
+                if (frameStepIdx % 2 === 0) playAudio('click'); // পেগে আঘাত লাগার ওরিজিনাল সাউন্ড ইফেক্ট
+
+                frameStepIdx++;
+            }, 45); // 🚀 ৪৫ মিলি-সেকেন্ড স্মুথ ফিজিক্স মেগা বুস্টার গতি ভাই ভাই
+        }
+
+        function triggerFooterSlotFlashGlow(slotIdx) {
+            const slots = document.querySelectorAll(".mult-box");
+            if (slots[slotIdx]) {
+                slots[slotIdx].classList.add("slot-flash-active-glow");
+                setTimeout(() => { slots[slotIdx].classList.remove("slot-flash-active-glow"); }, 1200);
+            }
+        }
+
+                // 🛫 কোর BET বোতাম ট্রিগার অ্যাকশন গেটওয়ে ভাই ভাই
+        async function handlePlinkoBallDropAction() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            document.getElementById("spin-btn").disabled = true;
+            document.getElementById("win-status-box").className = "win-status-container";
+            document.getElementById("win-text-msg").innerText = "🔴 গোল্ডেন লাকি বল ড্রপ হচ্ছে...";
+
+            playAudio('spin');
+            resizePlinkoCanvas(); // ক্যানভাস ফ্রেশ রিসেট লক
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/plinko-drop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: urlUserId,
+                        amount: parseFloat(currentBet),
+                        wallet: urlWallet
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data && data.success === true) {
+                    balance = parseFloat(data.balance);
+                    if (window.parent) window.parent.postMessage({ action: "refresh_wallet" }, "*");
+                    if (window.top) window.top.postMessage({ action: "refresh_wallet" }, "*");
+
+                    // ডাটা আসার সাথে সাথে এниемেশন ফায়ার লক ভাই ভাই
+                    runPlinkoBallDropAnimation(data);
+                } else {
+                    alert(data.message || "❌ Insufficient Balance! Please Recharge BDT.");
+                    stopPlinkoState();
+                }
+            } catch (err) {
+                alert("⚠️ সেশন আউট! আবার BET বোতাম চাপুন ভাই ভাই।");
+                stopPlinkoState();
+            }
+        }
+
+        function showFinalGameReward(status, winAmount, multiplier) {
+            const msgBox = document.getElementById("win-status-box");
+            const textMsg = document.getElementById("win-text-msg");
+
+            if (multiplier >= 1.0) {
+                playAudio('win');
+                msgBox.className = "win-status-container win-glow-bar";
+                textMsg.innerText = `🏆 মেগা উইন!! বল হিট করেছে x${multiplier} বক্সে [৳${winAmount}]`;
+            } else {
+                playAudio('wheel'); 
+                msgBox.className = "win-status-container lose-glow-bar";
+                textMsg.innerText = `❌ বল হিট করেছে x${multiplier} বক্সে। এই রাউন্ডে বাজি লস ভাই!`;
+            }
+
+            document.getElementById("user-balance").innerText = balance.toFixed(2);
+            stopPlinkoState();
+
+            if (isAuto) {
+                autoInterval = setTimeout(() => { if (isAuto) handlePlinkoBallDropAction(); }, 2500); 
+            }
+        }
+
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on("balanceUpdate", (data) => {
+                if (data && data.username === urlUserId) {
+                    if (window.parent) window.parent.postMessage({ action: "refresh_wallet" }, "*");
+                    fetchLiveBalance();
+                }
+            });
+        }
+
+        async function fetchLiveBalance() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/plinko-balance?userId=${urlUserId}&wallet=${urlWallet}`);
+                const data = await response.json();
+                if (data && data.success) {
+                    balance = parseFloat(data.balance);
+                    document.getElementById("user-balance").innerText = balance.toFixed(2);
+                }
+            } catch (e) { console.error("Balance fetch error check"); }
+        }
+
+        window.onload = () => {
+            window.addEventListener('resize', resizePlinkoCanvas);
+            resizePlinkoCanvas();
+            if (window.parent) window.parent.postMessage({ action: "refresh_wallet" }, "*");
+            fetchLiveBalance();
+        };
+
+        function adjustBet(action) {
+            if (isSpinning) return;
+            if (action === 'minus' && currentBet > 1) {
+                if (currentBet <= 10) currentBet -= 1;
+                else if (currentBet <= 100) currentBet -= 10;
+                else if (currentBet <= 1000) currentBet -= 100;
+                else currentBet -= 500;
+            }
+            if (action === 'plus' && currentBet < 20000) {
+                if (currentBet < 10) currentBet += 1;
+                else if (currentBet < 100) currentBet += 10;
+                else if (currentBet < 1000) currentBet += 100;
+                else currentBet += 500;
+            }
+            if (currentBet < 1) currentBet = 1;
+            if (currentBet > 20000) currentBet = 20000;
+            
+            document.getElementById("bet-display").innerText = `৳${currentBet}`;
+            playAudio('click');
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById("mute-btn").innerText = isMuted ? "🔇" : "🔊";
+            document.getElementById("mute-btn").classList.toggle("muted-active", isMuted);
+            slotSounds.click.muted = isMuted;
+            slotSounds.spin.muted = isMuted;
+            slotSounds.win.muted = isMuted;
+            slotSounds.wheel.muted = isMuted;
+        }
+
+        function toggleAuto() {
+            isAuto = !isAuto;
+            document.getElementById("auto-btn").classList.toggle("active", isAuto);
+            if (isAuto && !isSpinning) handlePlinkoBallDropAction();
+            playAudio('click');
+        }
+
+        function stopPlinkoState() {
+            isSpinning = false;
+            document.getElementById("spin-btn").disabled = false;
+            if (!isAuto && autoInterval) clearTimeout(autoInterval);
+        }
+
+        // 🎯 [৪টি ওরিজিনাল প্রিমিয়াম ক্যাসিনো সাউন্ড ও বাফার গেটওয়ে লক ভাই ভাই]
+        const slotSounds = {
+            click: new Audio('click2.mp3'),
+            spin: new Audio('spin2.mp3'),
+            win: new Audio('win2.mp3'),
+            wheel: new Audio('wheel1.mp3')
+        };
+        Object.values(slotSounds).forEach(s => s.load());
+
+        function playAudio(type) { 
+            if (isMuted) return; 
+            try { 
+                slotSounds[type].currentTime = 0; 
+                slotSounds[type].play(); 
+            } catch(e){} 
+        }
+    </script>
+</body>
+</html>
+
