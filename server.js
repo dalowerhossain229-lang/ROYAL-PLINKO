@@ -134,16 +134,17 @@ app.post('/api/plinko-drop', async (req, res) => {
             }
         }
 
-        let winAmount = 0;
+                // 🚀 [রয়্যাল ক্যাসিনো ওরিজিনাল ব্যালেন্স প্রোটেকশন বর্ম ভাই ভাই]
+        let winAmount = parseFloat((reqAmount * winMultiplier).toFixed(2));
         let dbAction = "bet";
         let dbAmount = reqAmount;
 
         if (winMultiplier > 0) {
-            winAmount = parseFloat((reqAmount * winMultiplier).toFixed(2));
+            // 🎯 প্লেয়ার যদি ০.২ বা ০.৫ বা যেকোনো ওডসে হিট করে, ডাটাবেজ যাতে বাজি কেটে নেট রিটার্ন হিসাব মেলায় ভাই ভাই!
             dbAction = "win";
-            dbAmount = winAmount;
+            dbAmount = winAmount; 
         } else {
-            // ০ ওডস বা জিরো স্লটে বল পড়লে পুরো টাকা ডিরেক্ট লস বাজি ডেবিট ভাই ভাই
+            // ০ ওডস পড়লে বাজি লস, ডাটাবেজে জিরো রিটার্ন যাবে (টাকা সম্পূর্ণ কাটা যাবে)
             dbAction = "bet";
             dbAmount = reqAmount;
         }
@@ -155,14 +156,15 @@ app.post('/api/plinko-drop', async (req, res) => {
             wallet: targetWallet
         };
 
-        if (dbAction === "win" && winMultiplier >= 1.0) {
-            phpPayload.bet_amount = reqAmount;
-            phpPayload.multiplier = winMultiplier.toFixed(2);
-            phpPayload.status = "win";
-            phpPayload.type = "win";
-            phpPayload.is_win = 1;
-            phpPayload.win_status = "win";
-            phpPayload.log_status = "win";
+        // 🔒 [হাউস প্রফিট সিকিউরিটি লক]: ডাটাবেজ ব্যাকএন্ড সিঙ্কে বাজি ধরা এমাউন্টের ওরিজিনাল ট্র্যাক পাঠানো ভাই ভাই
+        phpPayload.bet_amount = reqAmount;
+        phpPayload.multiplier = winMultiplier.toFixed(2);
+        phpPayload.status = (winMultiplier >= 1.0) ? "win" : "lose";
+        phpPayload.type = (winMultiplier >= 1.0) ? "win" : "lose";
+        phpPayload.is_win = (winMultiplier >= 1.0) ? 1 : 0;
+        phpPayload.win_status = (winMultiplier >= 1.0) ? "win" : "lose";
+        phpPayload.log_status = (winMultiplier >= 1.0) ? "win" : "lose";
+
         }
 
         const response = await axios.post(MAIN_SITE_URL + '/api_callback.php', phpPayload, { timeout: 30000 });
