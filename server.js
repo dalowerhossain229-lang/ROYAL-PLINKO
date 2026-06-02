@@ -67,12 +67,14 @@ app.post('/api/plinko-drop', async (req, res) => {
 
     try {
         // 🔒 [ব্যালেন্স যাচাই প্রোটোকল]: বাজি প্লে করার আগে ডাটাবেজ থেকে রিয়েল টাকা নিশ্চিত করার চাবি
-        const balResponse = await axios.post(`${MAIN_SITE_URL}/api_callback.php`, {
+                const balResponse = await axios.post(`${MAIN_SITE_URL}/api_callback.php`, {
             action: "bet",
             username: userId,
-            amount: 0,
-            wallet: targetWallet
+            amount: reqAmount, // 🎯 বাজি ধরার ওরিজিনাল টাকা এখানে পাস হবে ভাই ভাই
+            wallet: targetWallet, // 74 নম্বর লাইনের মেইন ওয়ালেট এলাইনমেন্ট লক
+            game: typeof game !== 'undefined' ? game : "Royal-Plinko" // 👈 ৭৪ নম্বর লাইনের পর কমা এবং কন্ডিশনাল ব্র্যাকেট নিখুঁত বর্মে লক!
         }, { timeout: 30000 });
+
         
         let currentDbBalance = 0;
         if (balResponse.data && balResponse.data.status === "ok" && balResponse.data.balance !== undefined) {
@@ -95,7 +97,7 @@ app.post('/api/plinko-drop', async (req, res) => {
         // 🎰 [🎰 ৯৫% ওরিজিনাল ক্যাসিনো RTP ও বল ড্রপিং ফিজিক্স লুপ ভাই ভাই]
         while (isLoopActive && loopSafety < 200) {
             loopSafety++;
-            
+Royal-Derby 
             // ২১টি পেগের সারি ভেদ করে বল ডানে-বামে যাওয়ার ওরিজিনাল ক্যানভাস পাথ জেনারেটর
             dropPath = [];
             let currentX = 0;
