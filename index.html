@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ROYAL PLINKO - BALL DROPPING KING</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 🎨 লাইভ প্লিনকো ক্যাসিনো এরিনা সিএসএস ফ্রেম ইনজেকশন ভাই ভাই */
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05070c; font-family: 'Segoe UI', Roboto, sans-serif; color: #fff; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .header { display: none !important; } 
+        
+        body { 
+            background: radial-gradient(circle at center, #0e1a2f 0%, #04060a 100%); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            height: 100vh; 
+        }
+
+        /* 🏟️ মেইন প্লিনকো বল ড্রপিং পেগস কার্পেট ক্যানভাস বোর্ড */
+        .plinko-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 330px;
+            margin: 10px auto 0 auto;
+            background: linear-gradient(180deg, #090e1a 0%, #05070d 100%);
+            border: 2px solid #1a263f;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9);
+            z-index: 1;
+        }
+
+        #plinko-game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 📊 আপনার স্ক্রিনশটের হুবহু ওরিজিনাল ওッズ বাকেটের নিওন কালার বার গ্রিড */
+        .plinko-buckets-grid-container {
+            display: grid;
+            grid-template-columns: repeat(21, 1fr);
+            width: 100%;
+            max-width: 430px;
+            margin: 0 auto;
+            gap: 1px;
+            padding: 0 5px;
+            box-sizing: border-box;
+        }
+
+        .plinko-bucket-bar {
+            height: 32px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 6px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+            text-align: center;
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.4);
+            transition: all 0.15s ease;
+        }
+
+        /* 📢 লাইভ মেসেজ প্যানেল বার */
+        .win-status-container { position: relative; z-index: 10; text-align: center; padding: 10px; margin: 4px 12px; background: rgba(9, 12, 18, 0.6); border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); }
+        #win-text-msg { font-size: 12px; font-weight: 700; color: #38bdf8; letter-spacing: 0.3px; }
+
+        /* 🎛️ নিচের মেইন গেম কন্ট্রোল প্যানেল ফুটার (১৫ পিক্সেল ওপরে লিফটিং সুপ্রিম লক) */
+        .footer-controls { position: relative; z-index: 50; background: #07090e; border-top: 1px solid #161b29; padding: 15px 15px 38px 15px; box-shadow: 0 -8px 25px rgba(0,0,0,0.7); }
+        .play-section { display: flex; justify-content: space-between; align-items: center; gap: 10px; max-width: 450px; margin: 0 auto; margin-bottom: 25px; }
+        .bet-btn-nav { background: #111522; border: 1px solid #20293d; color: #ffaa00; font-size: 18px; font-weight: 800; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .play-btn { flex: 1; background: linear-gradient(180deg, #ffbb00 0%, #d48800 100%); color: #000; font-size: 15px; font-weight: 900; border: none; padding: 12px 0; border-radius: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(212,136,0,0.3); }
+        .play-btn:disabled { background: #141721 !important; border-color: #1f2536 !important; color: #4b5563 !important; box-shadow: none !important; cursor: not-allowed; }
+        .icon-btn { background: #111522; border: 1px solid #20293d; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #ffaa00; font-weight: bold; }
+        .icon-btn.active { background: #ffaa00; color: #000; box-shadow: 0 0 10px rgba(255,170,0,0.4); }
+
+        .win-glow-bar { border-color: rgba(0, 255, 136, 0.4) !important; background: rgba(0, 255, 136, 0.05) !important; }
+        .win-glow-bar #win-text-msg { color: #00ff88 !important; }
+        .lose-glow-bar { border-color: rgba(255, 51, 102, 0.4) !important; background: rgba(255, 51, 102, 0.05) !important; }
+        .lose-glow-bar #win-text-msg { color: #ff3366 !important; }
+    </style>
+</head>
+<body>
+
+    <div class="header" style="display:none !important;">
+        <div class="balance-box">৳ <span id="user-balance">0.00</span></div>
+    </div>
+
+    <!-- 🏟️ মেইন প্লিনকো বল ড্রপিং পেগস ক্যানভাস বোর্ড -->
+    <div class="plinko-canvas-wrapper">
+        <canvas id="plinko-game-canvas"></canvas>
+    </div>
+
+    <!-- 📊 আপনার স্ক্রিনশটের হুবহু ওরিজিনাল ওッズ বাকেটের নিওন কালার বার গ্রিড -->
+    <div class="plinko-buckets-grid-container" id="plinko-buckets-bars-grid"></div>
+
+    <!-- 📢 উইন-লস লাইভ ক্যাসিনো মেসেজ প্যানেল বার -->
+    <div class="win-status-container" id="win-status-box">
+        <span id="win-text-msg">আপনার বাজি ধরুন এবং সোনার বল ড্রপ করুন ভাই!</span>
+    </div>
+
+    <!-- 🎛️ অ্যাকশন কন্ট্রোল ফুটার প্যানেল বার -->
+    <div class="footer-controls">
+        <div class="play-section">
+            <button class="bet-btn-nav" onclick="adjustBet('minus')">-</button>
+            <div style="text-align: center; width: 65px;">
+                <div style="font-size: 9px; color: #aaa; font-weight: bold;">BET</div>
+                <div style="font-size: 15px; font-weight: 900; color: #fff;" id="bet-display">৳৫০</div>
+            </div>
+            <button class="bet-btn-nav" onclick="adjustBet('plus')">+</button>
+
+            <button class="play-btn" id="spin-btn" onclick="handlePlinkoBallDropRoll()">BET</button>
+            
+            <div class="icon-group">
+                <button class="icon-btn" id="auto-btn" onclick="toggleAuto()">🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('userId') || urlParams.get('id') || urlParams.get('username') || "guest_user";
+        const urlWallet = urlParams.get('wallet') || "main";
+        const SERVER_URL = window.location.origin;
+
+        let balance = 0.00;
+        let currentBet = 50;
+        let isSpinning = false;
+        let isAuto = false;
+        let autoInterval = null;
+
+        // HTML5 ক্যানভাস ও ড্রয়িং নোড ইনিশিয়েট ভাই ভাই
+        const canvas = document.getElementById("plinko-game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        // ক্যানভাস সাইজিং রি-লক প্রোটোকল
+        canvas.width = 450;
+        canvas.height = 330;
+
+        // আপনার স্ক্রিনশটের হুবহু ওரிজিনাল ওッズ ভ্যালু ও নিওন কালার প্যালেট ম্যাপিং
+        const bucketsData = [
+            { val: "500", bg: "#7f1d1d" }, { val: "100", bg: "#991b1b" }, { val: "50", bg: "#b91c1c" },
+            { val: "10", bg: "#c2410c" },  { val: "5", bg: "#d97706" },   { val: "3.0", bg: "#eab308" },
+            { val: "2.0", bg: "#84cc16" }, { val: "0.5", bg: "#22c55e" }, { val: "0.3", bg: "#10b981" },
+            { val: "0.2", bg: "#06b6d4" }, { val: "0", bg: "#1d4ed8" },   { val: "0.2", bg: "#06b6d4" },
+            { val: "0.3", bg: "#10b981" }, { val: "0.5", bg: "#22c55e" }, { val: "2.0", bg: "#84cc16" },
+            { val: "3.0", bg: "#eab308" }, { val: "5", bg: "#d97706" },   { val: "10", bg: "#c2410c" },
+            { val: "50", bg: "#b91c1c" },  { val: "100", bg: "#991b1b" }, { val: "500", bg: "#7f1d1d" }
+        ];
+
+        // ফুটার গ্রিডে বাকেট বারগুলো জেনারেট লক ওস্তাদ
+        const barsGrid = document.getElementById("plinko-buckets-bars-grid");
+        bucketsData.forEach((b, idx) => {
+            const bar = document.createElement("div");
+            bar.className = "plinko-bucket-bar";
+            bar.id = `b-bar-${idx}`;
+            bar.style.backgroundColor = b.bg;
+            bar.innerText = b.val;
+            barsGrid.appendChild(bar);
+        });
+
+        // 🏟️ প্লিনকো ১২-লাইন পেগস (খুঁটি) ম্যাট্রিক্স জেনারেশন ইঞ্জিন
+        const pegRows = 12;
+        let pegsArray = [];
+        const startY = 30;
+        const rowSpacing = 22;
+        const colSpacing = 18;
+
+        for (let r = 0; r < pegRows; r++) {
+            let colsInRow = r + 3; // ত্রিভুজ আকৃতির খুঁটি বিন্যাস লক ওস্তাদ!
+            let rowXStart = (canvas.width / 2) - ((colsInRow - 1) * colSpacing / 2);
+            for (let c = 0; c < colsInRow; c++) {
+                pegsArray.push({
+                    x: rowXStart + (c * colSpacing),
+                    y: startY + (r * rowSpacing)
+                });
+            }
+        }
+
+        // ক্যানভাস স্ট্যাটিক পেগস ড্রয়িং লুপ চ্যাম
+        function drawPlinkoStaticPegsMatrix() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // ওপরের লাল স্টার্ট ড্রপার ত্রিভুজ চিহ্ন ড্র লক ভাই ভাই
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 5);
+            ctx.lineTo((canvas.width / 2) - 10, 20);
+            ctx.lineTo((canvas.width / 2) + 10, 20);
+            ctx.fill();
+
+            // খুঁটিগুলো ডার্ক গ্রে নিওন ডট গোলকে ফুটিয়ে তোলা
+            ctx.fillStyle = "#4b5563";
+            pegsArray.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+drawPlinkoStaticPegsMatrix();
+
+        function adjustBet(action) {
+            if (isSpinning) return;
+            if (action === 'minus' && currentBet > 50) currentBet -= 50;
+            if (action === 'plus' && currentBet < 20000) currentBet += 50;
+            document.getElementById("bet-display").innerText = `৳${currentBet}`;
+            playAudio('click');
+        }
+
+        // 🎰 [🎰 সোনার বল নিখুঁত বাউন্সিং ও খুঁটি ঠোকার লাইভ ক্যানভাস এনিমেশন ইঞ্জিন]
+        function animatePlinkoBallDropping(serverGameData) {
+            let pathSeq = serverGameData.ballPathSequence;
+            let targetBucketIdx = serverGameData.selectedBucketIndex;
+
+            let ballX = canvas.width / 2;
+            let ballY = 20;
+            let currentLine = 0;
+            
+            // নিখুঁত বাউন্স ট্র্যাকিং অফসেট টাইমিং নব
+            let animInterval = setInterval(() => {
+                drawPlinkoStaticPegsMatrix();
+
+                // সোনার বল ড্রয়িং গ্লো মেকানিজম সিঙ্ক ওস্তাদ ভাই ভাই!
+                ctx.fillStyle = "#fbbf24";
+                ctx.shadowColor = "#f59e0b";
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0; // শ্যাডো রিসেট
+
+                if (currentLine < 12) {
+                    let dir = pathSeq[currentLine]; // ০ হলে বামে বাঁক, ১ হলে ডানে বাঁক লক!
+                    ballY += rowSpacing;
+                    ballX += (dir === 1) ? (colSpacing / 2) : -(colSpacing / 2);
+                    
+                    playAudio('click'); // প্রতি খুঁটিতে বল লাগতেই ওরিজিনাল ক্লিক অডিও ফায়ার!
+                    currentLine++;
+                } else {
+                    clearInterval(animInterval);
+
+                    // বল নিচে পড়তেই বাকেট বক্সে হালকা নিয়ন ফ্ল্যাশ অ্যানিমেশন পুশ
+                    const targetedBar = document.getElementById(`b-bar-${targetBucketIdx}`);
+                    if (targetedBar) {
+                        targetedBar.style.transform = "translateY(4px) scale(1.08)";
+                        setTimeout(() => targetedBar.style.transform = "none", 250);
+                    }
+
+                    if (serverGameData.balance !== undefined) {
+                        balance = parseFloat(serverGameData.balance);
+                    }
+                    showFinalPlinkoReward(serverGameData.status, serverGameData.selectedOddsValue, serverGameData.winAmount);
+                }
+            }, 180); // হাই-স্পিড ১৮০ মিলি-সেকেন্ড বল রানিং সিঙ্ক লক
+        }
+
+        async function handlePlinkoBallDropRoll() {
+            if (isSpinning || isSpinning === true) return; 
+
+            isSpinning = true;
+            if (document.getElementById("spin-btn")) document.getElementById("spin-btn").disabled = true;
+            if (document.getElementById("win-status-box")) document.getElementById("win-status-box").className = "win-status-container";
+            if (document.getElementById("win-text-msg")) document.getElementById("win-text-msg").innerText = "🔮 সোনার বল ড্রপ করা হয়েছে... বাকেট বাউন্স গণনার অপেক্ষা ওস্তাদ...";
+            playAudio('click');
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/plinko-drop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: urlUserId, amount: parseFloat(currentBet), wallet: urlWallet
+                    })
+                });
+
+                const serverRes = await response.json();
+                
+                if (serverRes.success || serverRes.success === true) {
+                    let parsedLiveBalance = serverRes.balance || serverRes.data?.balance || balance;
+                    balance = parseFloat(parsedLiveBalance);
+                    
+                    let targetGamePayload = serverRes.gameData || serverRes;
+                    animatePlinkoBallDropping(targetGamePayload);
+                } else {
+                    alert(serverRes.message || "❌ আপনার অ্যাকাউন্ট ব্যালেন্স জিরো বা অপ্রতুল! দয়া করে রিচার্জ করুন ওস্তাদ।");
+                    stopPlinkoState();
+                }
+            } catch (err) {
+                stopPlinkoState();
+            }
+        }
+
+        function showFinalPlinkoReward(status, selectedOddsValue, winAmount) {
+            const msgBox = document.getElementById("win-status-box");
+            const textMsg = document.getElementById("win-text-msg");
+            
+            if (status === "win" && selectedOddsValue >= 1.00) {
+                playAudio('win');
+                if (msgBox) msgBox.className = "win-status-container win-glow-bar";
+                if (textMsg) textMsg.innerHTML = `🎉 মেগা গ্র্যান্ড উইন ওস্তাদ! বল বাউন্স খেয়ে <b>${selectedOddsValue}X</b> বাকেটে পড়েছে। ওয়ালেটে ৳${winAmount} ক্রেডিট হয়েছে ভাই ভাই!`;
+            } else {
+                playAudio('wheel');
+                if (msgBox) msgBox.className = "win-status-container lose-glow-bar";
+                if (selectedOddsValue === 0 || selectedOddsValue === 0.00) {
+                    textMsg.innerHTML = `💥 ওহ হো লস ওস্তাদ! বল সেন্ট্রাল <b>০X</b> বাকেটে পড়েছে। আবার অন ফায়ার কদম ফেলুন ভাই ভাই!`;
+                } else {
+                    textMsg.innerHTML = `💥 ওহ হো আংশিক লস! বল আংশিক <b>${selectedOddsValue}X</b> বাকেটে পড়েছে। আবার অন ফায়ার কদম ফেলুন ভাই ভাই!`;
+                }
+            }
+
+            if (typeof balance !== 'undefined' && !isNaN(balance)) {
+                if (document.getElementById("user-balance")) {
+                    document.getElementById("user-balance").innerText = balance.toFixed(2);
+                }
+            }
+
+            setTimeout(() => { fetchLiveBalance(); }, 1500);
+            stopPlinkoState();
+
+            if (isAuto) {
+                autoInterval = setTimeout(() => {
+                    if (isAuto) handlePlinkoBallDropRoll();
+                }, 3500);
+            }
+        }
+
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on("balanceUpdate", (data) => {
+                if (data && data.username === urlUserId) {
+                    if (data.balance !== undefined) {
+                        balance = parseFloat(data.balance);
+                        if (document.getElementById("user-balance")) {
+                            document.getElementById("user-balance").innerText = balance.toFixed(2);
+                        }
+                    }
+                    if (window.parent) window.parent.postMessage({ action: "refresh_wallet" }, "*");
+                }
+            });
+        }
+
+        async function fetchLiveBalance() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/plinko-balance?userId=${urlUserId}&wallet=${urlWallet}`);
+                const serverData = await response.json();
+                if (serverData.success || serverData.balance !== undefined) {
+                    balance = parseFloat(serverData.balance);
+                    if (document.getElementById("user-balance")) {
+                        document.getElementById("user-balance").innerText = balance.toFixed(2);
+                    }
+                }
+            } catch (e) { console.error("Balance stream link check passed"); }
+        }
+
+        window.onload = () => {
+            if (window.parent) window.parent.postMessage({ action: "refresh_wallet" }, "*");
+            fetchLiveBalance();
+        };
+
+        function toggleAuto() {
+            isAuto = !isAuto;
+            const autoEl = document.getElementById("auto-btn");
+            if (autoEl) autoEl.classList.toggle('active', isAuto);
+            if (isAuto && !isSpinning) handlePlinkoBallDropRoll();
+            playAudio('click');
+        }
+
+        function stopPlinkoState() {
+            isSpinning = false;
+            if (document.getElementById("spin-btn")) document.getElementById("spin-btn").disabled = false;
+            if (!isAuto && autoInterval) clearTimeout(autoInterval);
+        }
+
+        const slotSounds = {
+            click: new Audio('spin2.mp3'), spin: new Audio('spin2.mp3'),
+            win: new Audio('win2.mp3'), wheel: new Audio('spin2.mp3')
+        };
+        Object.values(slotSounds).forEach(s => s.load());
+
+        function playAudio(type) {
+            try { slotSounds[type].currentTime = 0; slotSounds[type].play(); } catch(e) {}
+        }
+    </script>
+</body>
+</html>
+
+        
